@@ -26,7 +26,7 @@ from sbbbin import SbbBinarizer
 
 
 __version__ = "0.2.0"
-__prog__ = "template"
+__prog__ = "sbbbin"
 __footer__ = "Developed at Centre for Philology and Digitality (ZPD), University of Würzburg"
 
 
