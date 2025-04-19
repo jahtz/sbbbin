@@ -51,7 +51,7 @@ The `--model-dir` option should now be set to `/path/to/models/sbb_hybrid_model`
 
 
 ## Usage
-```shell
+```
 $ sbbbin --help
                                                                                           
  Usage: sbbbin [OPTIONS] IMAGES...                                                        
