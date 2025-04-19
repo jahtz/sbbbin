@@ -25,7 +25,7 @@ from rich.progress import (Progress, TextColumn, BarColumn, MofNCompleteColumn, 
 from sbbbin import SbbBinarizer
 
 
-__version__ = "0.0.1"
+__version__ = "0.2.0"
 __prog__ = "template"
 __footer__ = "Developed at Centre for Philology and Digitality (ZPD), University of Würzburg"
 
