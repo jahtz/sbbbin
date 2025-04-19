@@ -1,18 +1,20 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel", "setuptools-ocrd"]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 [project]
-name = "sbb_binarization"
+name = "sbbbin"
+version = "0.2.0"
 authors = [
     {name = "Vahid Rezanezhad"},
     {name = "Staatsbibliothek zu Berlin - Preußischer Kulturbesitz"},
+    {name = "Janik Haitz", email = "jahtz.dev@proton.me"},
+    {name = "Centre for Philology and Digitality (ZPD), University of Würzburg"}
 ]
 description = "Pixelwise binarization with selectional auto-encoders in Keras"
 readme = "README.md"
 license.file = "LICENSE"
-requires-python = ">=3.8"
-
-dynamic = ["dependencies", "version"]
+requires-python = ">=3.8, <3.11"
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -24,24 +26,17 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Image Processing",
 ]
 
-[project.scripts]
-sbb_binarize = "sbb_binarize.cli:main"
-ocrd-sbb-binarize = "sbb_binarize.ocrd_cli:cli"
+dependencies = [
+    "rich_click~=1.8.8",
+    "tensorflow~=2.11.1",
+    "opencv-python~=4.11.0.86",
+    "numpy~=1.26.4"
+]
+scripts = { sbbbin = "cli.sbbbin_cli:cli" }
 
 [project.urls]
-Homepage = "https://github.com/qurator-spk/sbb_binarization"
-Repository = "https://github.com/qurator-spk/sbb_binarization.git"
-
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+repository = "https://github.com/jahtz/sbbbin"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["sbb_binarize"]
-namespaces = false
-
-[tool.setuptools]
-include-package-data = true
-
-[tool.setuptools.package-data]
-"*" = ["*.json"]
+where = ["src"]
+exclude = ["tests", "assets"]

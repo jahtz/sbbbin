@@ -1,94 +1,98 @@
-# sbb_binarization
+# sbbbin
+Generate binary versions of input images using SBB binarization. Pixelwise binarization with selectional auto-encoders in Keras. 
 
-> Document Image Binarization
+Forked from [sbb_binarization](https://github.com/qurator-spk/sbb_binarization/tree/transformer_model_integration)
 
-[![pip release](https://img.shields.io/pypi/v/sbb-binarization.svg)](https://pypi.org/project/sbb-binarization/)
-[![GHActions CI](https://github.com/qurator-spk/sbb_binarization/actions/workflows/test.yml/badge.svg)](https://github.com/qurator-spk/sbb_binarization/actions/workflows/test.yml)
-[![GHActions CD](https://github.com/qurator-spk/sbb_binarization/actions/workflows/docker-image.yml/badge.svg)](https://github.com/qurator-spk/sbb_binarization/actions/workflows/docker-image.yml)
+## Setup
+>[!NOTE]
+> Tested Versions:
+> - Python: `3.10.16`
+> - CUDA: `11.7`
+> - CuDNN: `8.1`
 
-<img src="https://user-images.githubusercontent.com/952378/63592437-e433e400-c5b1-11e9-9c2d-889c6e93d748.jpg" width="180"><img src="https://user-images.githubusercontent.com/952378/63592435-e433e400-c5b1-11e9-88e4-3e441b61fa67.jpg" width="180"><img src="https://user-images.githubusercontent.com/952378/63592440-e4cc7a80-c5b1-11e9-8964-2cd1b22c87be.jpg" width="220"><img src="https://user-images.githubusercontent.com/952378/63592438-e4cc7a80-c5b1-11e9-86dc-a9e9f8555422.jpg" width="220">
+>[!IMPORTANT]
+>The following setup process uses [PyEnv](https://github.com/pyenv/pyenv?tab=readme-ov-file#linuxunix)
 
-## Installation
+1. Clone repository
+	```shell
+	git clone https://github.com/jahtz/sbbbin
+	```
 
-Python `3.8-3.11` with Tensorflow `<2.13` are currently supported. While newer versions might also work, we currently don't test this.
+2. Create Virtual Environment
+	```shell
+	pyenv install 3.10.16
+	pyenv virtualenv 3.10.16 sbbbin
+	pyenv activate sbbbin
+	```
 
-You can either install from PyPI via 
+3. Install sbbbin
+    ```shell
+    pip install sbbbin/.
+    ```
 
-    pip install sbb-binarization
+4. (Optional) Select CUDA version
+    ```shell
+    export LD_LIBRARY_PATH="/usr/local/cuda-11.7/lib64:$LD_LIBRARY_PATH"
+    ```
 
-
-or clone the repository, enter it and install (editable) with
-
-    git clone git@github.com:qurator-spk/sbb_binarization.git
-    cd sbb_binarization; pip install -e .
-
-
-Alternatively, download the prebuilt image from Dockerhub:
-
-    docker pull ocrd/sbb_binarization
-
-
-### Models
-
-Pre-trained models can be downloaded from the locations below. We also provide models and [model cards](https://huggingface.co/SBB/sbb_binarization) on 🤗 
-
-| Version    |      Format   |  Download                                                                                            |
-|------------|:-------------:|------------------------------------------------------------------------------------------------------|
-| 2021-03-09 |  `SavedModel` | https://github.com/qurator-spk/sbb_binarization/releases/download/v0.0.11/saved_model_2021_03_09.zip |
-| 2021-03-09 |  `HDF5`       | https://qurator-data.de/sbb_binarization/2021-03-09/models.tar.gz                                    |
-| 2020-01-16 | `SavedModel`  | https://github.com/qurator-spk/sbb_binarization/releases/download/v0.0.11/saved_model_2020_01_16.zip |
-| 2020-01-16 |  `HDF5`       | https://qurator-data.de/sbb_binarization/2020-01-16/models.tar.gz                                    |
-
-With [OCR-D](https://ocr-d.de/), you can also use the [Resource Manager](https://ocr-d.de/en/models), e.g.
-
-    ocrd resmgr download ocrd-sbb-binarize "*"
+## Model
+Download from here: 
+https://qurator-data.de/sbb_binarization/ (2022-08-16)
+and extract to the format below.
+```
+📂 sbb_hybrid_model
+┗ 📂 saved_model
+  ┣ 📂 assets
+  ┣ 📂 variables
+  ┣ 📜 keras_metadata.pb
+  ┗ 📜 saved_model.pb
+```
+The `--model-dir` option should now be set to `/path/to/models/sbb_hybrid_model`.
 
 
 ## Usage
-
-```sh
-sbb_binarize \
-  -m <path to directory containing model files> \
-  <input image> \
-  <output image>
+```shell
+$ sbbbin --help
+                                                                                          
+ Usage: sbbbin [OPTIONS] IMAGES...                                                        
+                                                                                          
+ Pixelwise binarization with selectional auto-encoders in Keras.                          
+ IMAGES: List of image file paths to process. Accepts individual files, wildcards, or     
+ directories (with -g option for pattern matching).                                       
+ For GPU computation, CUDA 11 is required (>=11.2)                                        
+                                                                                          
+╭─ Input ────────────────────────────────────────────────────────────────────────────────╮
+│ *  IMAGES            (PATH) [required]                                                 │
+│ *  --model-dir   -m  Path to directory containing the binarization model               │
+│                      directories. See README.md for more information.                  │
+│                      (DIRECTORY)                                                       │
+│                      [required]                                                        │
+│    --glob        -g  Glob pattern for matching images within directories. Only         │
+│                      applicable when directories are passed in IMAGES.                 │
+│                      (TEXT)                                                            │
+│                      [default: *.png]                                                  │
+│    --batch-size  -b  Reload the model after processing a specified number of images.   │
+│                      Recommended for large input sets (>200 images) to manage memory   │
+│                      usage and prevent unexpected terminations.                        │
+│                      (INTEGER RANGE)                                                   │
+│    --force-cpu       Force CPU computation. This should be slower but has better       │
+│                      compatibility.                                                    │
+╰────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Output ───────────────────────────────────────────────────────────────────────────────╮
+│ --output        -o  Specify output directory for processed files. Defaults to the      │
+│                     parent directory of each input file.                               │
+│                     (DIRECTORY)                                                        │
+│ --suffix        -s  Specify suffix for processed output images. (TEXT)                 │
+│                     [default: .sbb.bin.png]                                            │
+│ --no-overwrite      Prevent the overwriting of existing files if they already exist.   │
+╰────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Help ─────────────────────────────────────────────────────────────────────────────────╮
+│ --help         Show this message and exit.                                             │
+│ --version      Show the version and exit.                                              │
+│ --verbose  -v  Set verbosity level. `-v`: WARNING, `-vv`: INFO, `-vvv`: DEBUG.         │
+│                (INTEGER)                                                               │
+╰────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
-**Note:** the output image MUST use either `.tif` or `.png` as file extension to produce a binary image. Input images can also be JPEG.
-
-Images containing a lot of border noise (black pixels) should be cropped beforehand to improve the quality of results.
-
-### Example
-
-
-    sbb_binarize -m /path/to/model/ myimage.tif myimage-bin.tif
-
-
-To use the [OCR-D](https://ocr-d.de/en/spec/cli) interface:
-
-    ocrd-sbb-binarize -I INPUT_FILE_GRP -O OCR-D-IMG-BIN -P model default
-
-
-## Testing
-
-For simple smoke tests, the following will
-- download models
-- download test data
-- run the OCR-D wrapper (on page and region level):
-    
-        make models
-        make test
-    
-## How to cite
-If you find this tool useful in your work, please consider citing our paper:
-
-```bibtex
-@inproceedings{hip23rezanezhad2,
-author    = {Vahid Rezanezhad and Konstantin Baierer and Clemens Neudecker},
-editor    = {Apostolos Antonacopoulos and Christian Clausner and Maud Ehrmann and Kai Labusch and Clemens Neudecker},
-title     = {A hybrid CNN-Transformer Model for Historical Document Image Binarization},
-booktitle = {Proceedings of the 7th International Workshop on Historical Document Imaging and Processing {HIP} 2023, 
-             San José, CA, USA, August 26, 2023},
-year      = {2023},
-url       = {https://doi.org/10.1145/3604951.3605508}
-}
-```
+## ZPD
+Developed at Centre for [Philology and Digitality](https://www.uni-wuerzburg.de/en/zpd/) (ZPD), [University of Würzburg](https://www.uni-wuerzburg.de/en/).
