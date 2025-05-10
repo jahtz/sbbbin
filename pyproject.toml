@@ -1,42 +1,40 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
 
 [project]
 name = "sbbbin"
-version = "0.2.0"
+version = "0.3.0"
+description = "Pixelwise binarization with selectional auto-encoders in Keras"
+readme = "README.md"
+keywords = []
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.8, <3.12"
 authors = [
     {name = "Vahid Rezanezhad"},
     {name = "Staatsbibliothek zu Berlin - Preußischer Kulturbesitz"},
     {name = "Janik Haitz", email = "jahtz.dev@proton.me"},
     {name = "Centre for Philology and Digitality (ZPD), University of Würzburg"}
 ]
-description = "Pixelwise binarization with selectional auto-encoders in Keras"
-readme = "README.md"
-license.file = "LICENSE"
-requires-python = ">=3.8, <3.11"
-
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
     "Topic :: Scientific/Engineering :: Image Processing",
 ]
-
 dependencies = [
-    "rich_click~=1.8.8",
-    "tensorflow~=2.11.1",
-    "opencv-python~=4.11.0.86",
-    "numpy~=1.26.4"
+    "tensorflow < 2.13",
+    "opencv-python ~= 4.11.0.86",
+    "rich ~= 14.0.0",
+    "click ~=8.1.8"
 ]
-scripts = { sbbbin = "cli.sbbbin_cli:cli" }
 
 [project.urls]
-repository = "https://github.com/jahtz/sbbbin"
+Homepage = "https://www.uni-wuerzburg.de/zpd/"
+Repository = "https://github.com/jahtz/nlbin"
 
-[tool.setuptools.packages.find]
-where = ["src"]
-exclude = ["tests", "assets"]
+[project.scripts]
+sbbbin = "sbbbin.cli:cli"
