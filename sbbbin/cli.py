@@ -84,7 +84,7 @@ def callback_paths(ctx, param, value) -> list[Path]:
 )
 @click.option(
     "-m", "--model", "model",
-    help="Path to directory containing the binarization 'saved_model' directory. See README.md for more information.",
+    help="Path to directory containing the binarization 'saved_model.pb' file. See README.md for more information.",
     type=click.Path(exists=True, dir_okay=True, file_okay=False, resolve_path=True, path_type=Path),
     required=True
 )
