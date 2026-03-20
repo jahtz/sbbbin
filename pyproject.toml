@@ -1,40 +1,57 @@
-[build-system]
-requires = ["hatchling >= 1.26"]
-build-backend = "hatchling.build"
-
 [project]
 name = "sbbbin"
-version = "0.3.0"
-description = "Pixelwise binarization with selectional auto-encoders in Keras"
+version = "0.4.0"
+description = "Add your description here"
 readme = "README.md"
-keywords = []
-license = "Apache-2.0"
-license-files = ["LICENSE"]
-requires-python = ">=3.8, <3.12"
 authors = [
-    {name = "Vahid Rezanezhad"},
-    {name = "Staatsbibliothek zu Berlin - Preußischer Kulturbesitz"},
-    {name = "Janik Haitz", email = "jahtz.dev@proton.me"},
-    {name = "Centre for Philology and Digitality (ZPD), University of Würzburg"}
+    { name = "jahtz", email = "jahtz.dev@proton.me" }
 ]
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Environment :: Console",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Apache Software License",
-    "Programming Language :: Python :: 3",
-    "Topic :: Scientific/Engineering :: Image Processing",
-]
+requires-python = ">=3.11,<3.13"
 dependencies = [
-    "tensorflow < 2.13",
-    "opencv-python ~= 4.11.0.86",
-    "rich ~= 14.0.0",
-    "click ~=8.1.8"
+    "click ~= 8.3.1",
+    "numpy ~= 2.4.3",
+    "opencv-python ~= 4.13.0.92",
+    "rich ~= 14.3.3",
 ]
 
-[project.urls]
-Homepage = "https://www.uni-wuerzburg.de/zpd/"
-Repository = "https://github.com/jahtz/nlbin"
+[project.optional-dependencies]
+cpu = [ "torch >=2.8,<2.9", "torchvision >=0.23,<0.24", "onnx2torch ~= 1.5.15" ]
+cu118 = [ "torch >=2.7,<2.8", "torchvision >=0.22,<0.23", "onnx2torch ~= 1.5.15" ]
+cu128 = [ "torch >=2.8,<2.9", "torchvision >=0.23,<0.24", "onnx2torch ~= 1.5.15" ]
+
+[tool.uv]
+conflicts = [[{ extra = "cpu" }, { extra = "cu118" }, { extra = "cu128" }]]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu128", extra = "cu128" },
+    { index = "pytorch-cu118", extra = "cu118" }
+]
+torchvision = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu118", extra = "cu118" },
+    { index = "pytorch-cu128", extra = "cu128" }
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu118"
+url = "https://download.pytorch.org/whl/cu118"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
 
 [project.scripts]
-sbbbin = "sbbbin.cli:cli"
+sbbbin = "sbbbin:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
