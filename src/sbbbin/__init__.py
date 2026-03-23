@@ -76,7 +76,7 @@ progressbar: Progress = Progress(
 )
 @click.option(
      '-d', '--device', 'device',
-     help='Set logging level.', 
+     help='Select the computing device. "cuda" requires a bundled CUDA/PyTorch version.', 
      type=click.Choice(['auto', 'cpu', 'cuda']),
      default='auto',
      show_default=True
