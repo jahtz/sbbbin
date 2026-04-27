@@ -1,7 +1,7 @@
 [project]
 name = "sbbbin"
 version = "0.4.0"
-description = "Add your description here"
+description = "Pixelwise image binarization with selectional auto-encoders."
 readme = "README.md"
 authors = [{ name = "jahtz", email = "jahtz.dev@proton.me" }]
 requires-python = ">=3.11,<3.13"
@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-sbbbin = "sbbbin:main"
+sbbbin = "sbbbin.cli:main"
 
 [build-system]
 requires = ["setuptools>=61"]

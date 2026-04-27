@@ -15,7 +15,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-warnings.filterwarnings("ignore", module="onnx2torch")
+warnings.filterwarnings('ignore', module='onnx2torch')
+logging.getLogger('onnx2torch').setLevel(logging.WARNING)
 logger: logging.Logger = logging.getLogger(__name__)
 
 
@@ -28,13 +29,9 @@ class TransposeWrapper(nn.Module):
         self.model = model
         
     def forward(self, x):
-        # Input: NCHW [1, 3, 224, 448] -> Convert to NHWC for the wrapped model: [1, 224, 448, 3]
-        x_nhwc = x.permute(0, 2, 3, 1)
-        
+        x_nhwc = x.permute(0, 2, 3, 1) # Input: NCHW [1, 3, 224, 448] -> Convert to NHWC for the wrapped model: [1, 224, 448, 3]
         output = self.model(x_nhwc)
-
-        # Output is in NHWC format [1, 224, 448, 2] -> Convert to NCHW: [1, 2, 224, 448]
-        if isinstance(output, dict):
+        if isinstance(output, dict): # Output is in NHWC format [1, 224, 448, 2] -> Convert to NCHW: [1, 2, 224, 448]
             output= list(output.values())[0]
         if len(output.shape) == 4:  # ty:ignore[unresolved-attribute]
             output = output.permute(0, 3, 1, 2)  # ty:ignore[unresolved-attribute]
@@ -45,7 +42,7 @@ class SbbBinarizer:
     """
     PyTorch implementation of SBB Binarization
     """
-    def __init__(self, model: Path, device: str = 'auto') -> None:
+    def __init__(self, model: Path, device: str = 'auto'):
         self.model_path: Path = model
         
         if device == 'auto':
@@ -55,15 +52,15 @@ class SbbBinarizer:
         logger.info(f'Using device: {self.device}')
         
         self.model, self.model_height, self.model_width, self.n_classes = self.load_model()
-        logger.info(f'Model dimensions: {self.model_height}×{self.model_width}, {self.n_classes} classes')
         
     def load_model(self):
+        logger.debug(f'Loading model from: {self.model_path}')
         try:
             checkpoint = torch.load(self.model_path.as_posix(), map_location=self.device, weights_only=False)
-            if isinstance(checkpoint, dict) and 'model' in checkpoint: # Checkpoint format with metadata
+            if isinstance(checkpoint, dict) and 'model' in checkpoint:
                 base_model = checkpoint['model']
                 model_info = checkpoint.get('model_info', {})
-            else: # Direct model format
+            else:
                 base_model = checkpoint
                 model_info = {}
                 
@@ -71,29 +68,34 @@ class SbbBinarizer:
             wrapped_model.to(self.device)
             wrapped_model.eval()
             
-            model_height = model_info.get('model_height', 224)
-            model_width = model_info.get('model_width', 448)
-            n_classes = model_info.get('output_channels', 2)
+            model_height: int = model_info.get('model_height', 224)
+            model_width: int = model_info.get('model_width', 448)
+            n_classes: int = model_info.get('output_channels', 2)
+            
+            logger.info(f'Model loaded ({model_width}x{model_height}, {n_classes} classes)')
 
             return wrapped_model, model_height, model_width, n_classes
-        except Exception as ex:
-            logger.error(f'Failed to load model: {ex}')
+        except Exception:
+            logger.exception('Failed to load model')
+            raise
             
-    def __predict_patch(self, patch: np.ndarray) -> np.ndarray:
+    def __predict_patch(self, patch: np.ndarray):        
         patch = patch.astype(np.float32)
-        if patch.max() > 1.5:   # uint8-like
+        if patch.max() > 1.5:
             patch = patch / 255.0
-        # Convert to tensor: HWC -> CHW -> NCHW
-        # patch is (224, 448, 3) -> tensor (1, 3, 224, 448)
-        patch_tensor = torch.from_numpy(patch).permute(2, 0, 1).unsqueeze(0).to(self.device)
+        
+        patch_tensor = (
+            torch.from_numpy(patch)
+            .permute(2, 0, 1)
+            .unsqueeze(0)
+            .to(self.device)
+        )
+        
         with torch.no_grad():
             output = self.model(patch_tensor)
-            # Output is now in NCHW format [1, 2, 224, 448] -> Get class predictions
-            predictions = torch.argmax(output, dim=1)[0]  # Remove batch dimension -> [224, 448]
-            predictions_numpy = predictions.cpu().numpy().astype(np.uint8)
-            # Invert the predictions (0->1, 1->0) then convert to pixel values (0->255, 1->0)
-            # predictions_numpy = (1 - predictions_numpy) * 255
-        return predictions_numpy
+            predictions = torch.argmax(output, dim=1)[0]
+            
+        return predictions.cpu().numpy().astype(np.uint8)
     
     def __predict_patches(
         self, 
@@ -103,7 +105,7 @@ class SbbBinarizer:
         img_org_h: int, 
         img_org_w: int, 
         n_batch_inference: int
-    ) -> np.ndarray:
+    ):
         margin = int(0.1 * self.model_width)
         width_mid = self.model_width - 2 * margin
         height_mid = self.model_height - 2 * margin
@@ -117,6 +119,9 @@ class SbbBinarizer:
         nyf = img_h / float(height_mid)
         nxf = int(nxf) + 1 if nxf > int(nxf) else int(nxf)
         nyf = int(nyf) + 1 if nyf > int(nyf) else int(nyf)
+        
+        logger.debug(f'Patch inference: img={img.shape}, patch={self.model_height}x{self.model_width}, margin={margin}')
+        logger.debug(f'Grid size: {nxf} x {nyf} patches')
 
         for i in range(nxf):
             for j in range(nyf):
@@ -269,6 +274,8 @@ class SbbBinarizer:
         return prediction_true[:, :, 0].astype(np.uint8)
         
     def __predict(self, img: np.ndarray, use_patches: bool = True, n_batch_inference: int = 5) -> np.ndarray:
+        logger.debug(f'Running inference on image {img.shape} (patches={use_patches})')
+        
         img_org_h, img_org_w = img.shape[:2]
         
         if img.shape[0] < self.model_height and img.shape[1] >= self.model_width:
@@ -293,6 +300,8 @@ class SbbBinarizer:
             index_start_h = 0
             index_start_w = 0
             img_padded = np.copy(img)
+            
+        logger.debug(f'Padded image shape: {img_padded.shape}, offsets: (h={index_start_h}, w={index_start_w})')
 
         img = np.copy(img_padded)
         
@@ -301,8 +310,15 @@ class SbbBinarizer:
         else:
             return self.__predict_image(img, img_org_h, img_org_w)
     
-    def run(self, image: np.ndarray, use_patches: bool = True) -> np.ndarray:
+    def run(self, image: np.ndarray, use_patches: bool = True):
+        """
+        Run the sbb binarization algorithm
+        Args:
+            image: The image array to process
+            use_patches: Process image in patches of 244x448 (recommended). Defaults to True.
+        Returns:
+            The binarized image array
+        """
         res = self.__predict(image, use_patches).astype(np.uint8)
-        
-        out = (1 - res) * 255   # -> 0/255
+        out = (1 - res) * 255
         return out.astype(np.uint8)
