@@ -5,7 +5,7 @@
 Pixelwise image binarization with selectional auto-encoders.<br>
 This repository is a PyTorch-based adaptation of the original SBB Binarization code.
 
-## Origin
+## Credits
 This repository is a fork of [sbb_binarization](https://github.com/qurator-spk/sbb_binarization/tree/transformer_model_integration).<br>
 Parts of that project were later integrated into [eynollah](https://github.com/qurator-spk/eynollah/blob/main/src/eynollah/sbb_binarize.py), which also influenced this codebase.<br>
 Additionally, this repository includes code from [sbb_binarizer_pytorch_converter](https://github.com/twphl/sbb_binarizer_pytorch_converter) to provide a PyTorch-based implementation.

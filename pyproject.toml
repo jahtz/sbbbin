@@ -1,9 +1,17 @@
 [project]
 name = "sbbbin"
-version = "0.4.0"
+version = "1.0.0"
 description = "Pixelwise image binarization with selectional auto-encoders."
 readme = "README.md"
-authors = [{ name = "jahtz", email = "jahtz.dev@proton.me" }]
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "jahtz", email = "dev@janikhtz.de" }]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Intended Audience :: Science/Research",
+    "Environment :: Console",
+]
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "click ~= 8.3.1",
@@ -15,9 +23,15 @@ dependencies = [
     "onnx2torch ~= 1.5.15"
 ]
 
+[project.urls]
+Homepage = "https://www.uni-wuerzburg.de/zpd/"
+Repository = "https://github.com/jahtz/sbbbin"
+Documentation = "https://github.com/jahtz/sbbbin#readme"
+Issues = "https://github.com/jahtz/sbbbin/issues"
+
 [project.scripts]
-sbbbin = "sbbbin.cli:main"
+sbbbin = "sbbbin.cli:cli"
 
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"

@@ -9,29 +9,29 @@ from typing import Literal
 import click
 import cv2
 import numpy as np
-from rich.logging import RichHandler
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn, TimeElapsedColumn, TimeRemainingColumn
+
+from .util import setup_logging, read_boolean_environment, expand_glob
 
 
 logger: logging.Logger = logging.getLogger(__name__)
-
-
-def setup_logging(level: Literal['ERROR', 'WARNING', 'INFO', 'DEBUG']) -> None:
-    logging.basicConfig(
-        level=level,
-        format='%(message)s', 
-        datefmt='[%X]', 
-        handlers=[RichHandler(markup=True, rich_tracebacks=True)]
-    )
+SHORT_HELP: bool = read_boolean_environment('SBBBIN_EXTENDED_HELP', True)
 
 
 @click.command(epilog='Developed at Centre for Philology and Digitality (ZPD), University of Würzburg')
-@click.version_option(version('sbbbin'), '--version', prog_name='sbbbin')
+@click.help_option('--help', hidden=SHORT_HELP)
+@click.version_option(version('sbbbin'), '--version', prog_name='sbbbin', hidden=SHORT_HELP)
 @click.argument(
     'images',
-    type=click.Path(exists=True, dir_okay=False, resolve_path=True, path_type=Path),
+    type=click.Path(),
+    callback=expand_glob,
     nargs=-1,
     required=True
+)
+@click.option(
+    '-o', '--output',
+    help='Output directory for generated image files. If omitted, each image file is written next to its input.',
+    type=click.Path(file_okay=False, resolve_path=True, path_type=Path),
 )
 @click.option(
     '-m', '--model',
@@ -40,50 +40,47 @@ def setup_logging(level: Literal['ERROR', 'WARNING', 'INFO', 'DEBUG']) -> None:
     required=True
 )
 @click.option(
-    '-o', '--output',
-    help='Output directory (defaults to parent directory of each input file).',
-    type=click.Path(file_okay=False, resolve_path=True, path_type=Path),
-)
-@click.option(
-    '-s', '--suffix', 'suffix',
+    '-s', '--suffix',
     help='Suffix for output images.', 
     type=click.STRING,
-    default=".sbb.bin.png", 
+    default='.sbb.bin.png', 
     show_default=True
 )
 @click.option(
-     '-d', '--device', 'device',
-     help='Compute device. \'cuda\' requires a bundled CUDA/PyTorch version.', 
+     '-d', '--device',
+     help='Compute device for inference. Use "auto" to automatically choose the best available device.', 
      type=click.Choice(['auto', 'cpu', 'cuda']),
      default='auto',
      show_default=True
 )
 @click.option(
-     '--logging', 'logging_level',
+     '--logging', 'level',
      type=click.Choice(['ERROR', 'WARNING', 'INFO', 'DEBUG']),
      default='ERROR',
      show_default=True
 )
-def main(
+def cli(
     images: list[Path],
     model: Path,
-    output: Path | None,
-    suffix: str,
-    device: Literal['auto', 'cpu', 'cuda'],
-    logging_level: Literal['ERROR', 'WARNING', 'INFO', 'DEBUG']
+    output: Path | None = None,
+    suffix: str = '.sbb.bin.png',
+    device: Literal['auto', 'cpu', 'cuda'] = 'auto',
+    level: Literal['ERROR', 'WARNING', 'INFO', 'DEBUG'] = 'ERROR'
 ) -> None:
     """
     Pixelwise image binarization with selectional auto-encoders using the SBB Binarization algorithm.
     
-    IMAGES: List of image file paths to process.
-    """
-    setup_logging(logging_level)
+    To view all available options with '--help', set the environment variable:
+        SBBBIN_EXTENDED_HELP=True
     
-    if output:
+    IMAGES: One or more image paths. Use glob patterns in quotes to process multiple files.
+    """
+    setup_logging(level)
+    
+    if not images:
+        raise click.BadArgumentUsage('No input images found')
+    if output is not None:
         output.mkdir(exist_ok=True, parents=True)
-        
-    if not suffix.startswith('.'):
-        suffix = f'.{suffix}'
 
     with Progress(
         BarColumn(bar_width=30),
@@ -92,7 +89,7 @@ def main(
         TimeRemainingColumn(),
         TextColumn('[progress.description]{task.description}'),
     ) as progress:
-        load_task = progress.add_task('Loading model...', total=None)
+        load_task = progress.add_task('Loading model', total=None)
         from .sbbbin import SbbBinarizer
         binarizer = SbbBinarizer(model, device)
         progress.remove_task(load_task)
@@ -100,7 +97,7 @@ def main(
         task = progress.add_task('Processing images', total=len(images))
         for fp in images:
             progress.update(task, description='/'.join(fp.parts[-4:]))
-            logging.info(f'Processing image: {fp}')
+            logger.info(f'Processing image: {fp}')
             try:
                 img: np.ndarray | None = cv2.imread(str(fp))
                 if img is None:
@@ -108,7 +105,7 @@ def main(
                     progress.advance(task)
                     continue
                 
-                res: np.ndarray = binarizer.run(img, use_patches=True)
+                res: np.ndarray = binarizer.process(img, use_patches=True)
                 
                 out_dir: Path = output or fp.parent
                 out_path: Path = out_dir / f'{fp.stem}{suffix}'

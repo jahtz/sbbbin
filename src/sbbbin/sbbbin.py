@@ -1,22 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
-"""
-PyTorch implementation of the SBB Binarization algorithm:
-https://github.com/qurator-spk/eynollah/blob/main/src/eynollah/sbb_binarize.py
+from __future__ import annotations
 
-Conversion based on this fork:
-https://github.com/twphl/sbb_binarizer_pytorch_converter/tree/main
-"""
 from pathlib import Path
 import logging
-import warnings
 
 import cv2
 import numpy as np
 import torch
 import torch.nn as nn
 
-warnings.filterwarnings('ignore', module='onnx2torch')
-logging.getLogger('onnx2torch').setLevel(logging.WARNING)
+
 logger: logging.Logger = logging.getLogger(__name__)
 
 
@@ -46,10 +39,9 @@ class SbbBinarizer:
         self.model_path: Path = model
         
         if device == 'auto':
-            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        else:
-            self.device = torch.device(device)
-        logger.info(f'Using device: {self.device}')
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = torch.device(device)
+        logger.info(f'Computation backend: {device.upper()}')
         
         self.model, self.model_height, self.model_width, self.n_classes = self.load_model()
         
@@ -310,7 +302,7 @@ class SbbBinarizer:
         else:
             return self.__predict_image(img, img_org_h, img_org_w)
     
-    def run(self, image: np.ndarray, use_patches: bool = True):
+    def process(self, image: np.ndarray, use_patches: bool = True):
         """
         Run the sbb binarization algorithm
         Args:
