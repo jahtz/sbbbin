@@ -108,7 +108,7 @@ def cli(
                 res: np.ndarray = binarizer.process(img, use_patches=True)
                 
                 out_dir: Path = output or fp.parent
-                out_path: Path = out_dir / f'{fp.stem}{suffix}'
+                out_path: Path = out_dir / f'{fp.name.split(".")[0]}{suffix}'
                 cv2.imwrite(str(out_path), res)
                 
             except Exception as exc:
