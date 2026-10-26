@@ -1,6 +1,10 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "sbbbin"
-version = "1.0.0"
+version = "1.1.0"
 description = "Pixelwise image binarization with selectional auto-encoders."
 readme = "README.md"
 license = "Apache-2.0"
@@ -32,6 +36,5 @@ Issues = "https://github.com/jahtz/sbbbin/issues"
 [project.scripts]
 sbbbin = "sbbbin.cli:cli"
 
-[build-system]
-requires = ["setuptools>=61", "wheel"]
-build-backend = "setuptools.build_meta"
+[tool.ruff.lint.isort]
+lines-after-imports = 2

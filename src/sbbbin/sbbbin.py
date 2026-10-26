@@ -1,13 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
-from __future__ import annotations
-
-from pathlib import Path
 import logging
+from pathlib import Path
 
 import cv2
 import numpy as np
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -21,13 +19,13 @@ class TransposeWrapper(nn.Module):
         super().__init__()
         self.model = model
         
-    def forward(self, x):
+    def forward(self, x):  # ty: ignore[invalid-mutable-override]
         x_nhwc = x.permute(0, 2, 3, 1) # Input: NCHW [1, 3, 224, 448] -> Convert to NHWC for the wrapped model: [1, 224, 448, 3]
         output = self.model(x_nhwc)
         if isinstance(output, dict): # Output is in NHWC format [1, 224, 448, 2] -> Convert to NCHW: [1, 2, 224, 448]
-            output= list(output.values())[0]
-        if len(output.shape) == 4:  # ty:ignore[unresolved-attribute]
-            output = output.permute(0, 3, 1, 2)  # ty:ignore[unresolved-attribute]
+            output= next(iter(output.values()))
+        if len(output.shape) == 4:
+            output = output.permute(0, 3, 1, 2)
         return output
 
 
@@ -96,7 +94,6 @@ class SbbBinarizer:
         index_start_w: int, 
         img_org_h: int, 
         img_org_w: int, 
-        n_batch_inference: int
     ):
         margin = int(0.1 * self.model_width)
         width_mid = self.model_width - 2 * margin
@@ -265,7 +262,7 @@ class SbbBinarizer:
         )
         return prediction_true[:, :, 0].astype(np.uint8)
         
-    def __predict(self, img: np.ndarray, use_patches: bool = True, n_batch_inference: int = 5) -> np.ndarray:
+    def __predict(self, img: np.ndarray, use_patches: bool = True) -> np.ndarray:
         logger.debug(f'Running inference on image {img.shape} (patches={use_patches})')
         
         img_org_h, img_org_w = img.shape[:2]
@@ -298,7 +295,7 @@ class SbbBinarizer:
         img = np.copy(img_padded)
         
         if use_patches:
-            return self.__predict_patches(img, index_start_h, index_start_w, img_org_h, img_org_w, n_batch_inference)
+            return self.__predict_patches(img, index_start_h, index_start_w, img_org_h, img_org_w)
         else:
             return self.__predict_image(img, img_org_h, img_org_w)
     
