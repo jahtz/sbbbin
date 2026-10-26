@@ -33,25 +33,27 @@ sbbbin [OPTIONS] IMAGES...
 ```text
 $ sbbbin --help
 Usage: sbbbin [OPTIONS] IMAGES...
-  Pixelwise binarization with selectional auto-encoders using the SBB
-  binarization algorithm
 
-  IMAGES: List of image file paths to process.
+  Pixelwise image binarization with selectional auto-encoders using the SBB
+  Binarization algorithm.
+
+  Arguments:
+    IMAGES: One or more image paths. Use glob patterns in quotes to process 
+            multiple files.
 
 Options:
-  --help                          Show this message and exit.
-  --version                       Show the version and exit.
-  -m, --model FILE                Path to the trained PyTorch (.pth) model.
-                                  [required]
-  -o, --output DIRECTORY          Specify output directory for processed
-                                  files. Defaults to the parent directory of
-                                  each input file.
-  -s, --suffix TEXT               Specify suffix for output images.  [default:
-                                  .sbb.bin.png]
-  -d, --device [auto|cpu|cuda]    Select the computing device. "cuda" requires
-                                  a bundled CUDA/PyTorch version.  [default:
-                                  auto]
-  --logging [ERROR|WARNING|INFO]  Set logging level.  [default: ERROR]
+  -o, --output DIRECTORY        Output directory for generated image files. If
+                                omitted, each image file is written next to
+                                its input.
+  -m, --model FILE              Path to the PyTorch (.pth) model file.
+                                [required]
+  -s, --suffix TEXT             Suffix for output images.  [default:
+                                .sbb.bin.png]
+  -d, --device [auto|cpu|cuda]  Compute device for inference. Use "auto" to
+                                automatically choose the best available
+                                device.  [default: auto]
+  -v, --verbose                 Set the verbosity level. Default: ERROR. Use
+                                -v for WARNING, -vv for INFO, -vvv for DEBUG.
 
   Developed at Centre for Philology and Digitality (ZPD), University of
   Würzburg
